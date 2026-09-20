@@ -1626,7 +1626,7 @@ function submitOrder(){
     id: 'BLK-' + Date.now().toString(36).toUpperCase(),
     date: new Date().toISOString(),
     customer: {name, phone, city, address: addr, note},
-    items: cart.map(c=>{ const p=findProduct(c.id); return {id:c.id, name:p?p.name:c.id, price:p?p.price:0, size:c.size, shoe:c.shoe, color:c.color, qty:c.qty}; }),
+    items: cart.map(c=>{ const p=findProduct(c.id); return {id:c.id, name:p?p.name:c.id, price:p?p.price:0, size:c.size||'', shoe:c.shoe||'', color:c.color||'', qty:c.qty||1}; }),
     total: cartTotal(),
     delivery: deliveryFee(),
     status: 'nouvelle'
@@ -1637,13 +1637,15 @@ function submitOrder(){
     localStorage.setItem('blkshop_orders', JSON.stringify(orders));
   }catch(_){}
   if(fireOn){
-    fdb.collection('orders').doc(order.id).set(order, {merge:true})
-      .catch(e=>{ console.warn('BLK SHOP · échec enregistrement commande:', e && e.code, e && e.message); });
-    fdb.collection('clients').doc('c_' + phone.replace(/[^0-9]/g,'')).set({
-      type:'commande', name, phone, city, address: addr, note,
-      date: order.date, orderId: order.id
-    }, {merge:true})
-      .catch(e=>{ console.warn('BLK SHOP · échec enregistrement client:', e && e.code, e && e.message); });
+    try{
+      fdb.collection('orders').doc(order.id).set(order, {merge:true})
+        .catch(e=>{ console.warn('BLK SHOP · échec enregistrement commande:', e && e.code, e && e.message); });
+      fdb.collection('clients').doc('c_' + phone.replace(/[^0-9]/g,'')).set({
+        type:'commande', name, phone, city, address: addr, note,
+        date: order.date, orderId: order.id
+      }, {merge:true})
+        .catch(e=>{ console.warn('BLK SHOP · échec enregistrement client:', e && e.code, e && e.message); });
+    }catch(e){ console.warn('BLK SHOP · erreur Firestore:', e); }
   }
   cart = [];
   saveCart();
@@ -1721,6 +1723,11 @@ function setActiveNav(route){
     a.classList.toggle('active', a.dataset.route === route);
   });
 }
+document.querySelectorAll('nav.links a[data-route]').forEach(a=>{
+  a.addEventListener('click', ()=>{
+    if(parseHash().path === a.dataset.route) render();
+  });
+});
 
 function wireShopPage(cat){
   const grid = document.getElementById('shopGrid');
@@ -1984,7 +1991,7 @@ function firstRender(){
   if(appStarted) return;
   appStarted = true;
   document.body.classList.add('loaded');
-  try{ console.log('%cBLK SHOP store — build clr-v25', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
+  try{ console.log('%cBLK SHOP store — build clr-v27', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
   render();
 }
 function runWhenFontsReady(cb, capMs){
