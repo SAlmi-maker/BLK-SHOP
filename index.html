@@ -747,7 +747,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 0;margin-top:60px;positio
   .drawer-head button{padding:6px;margin:-6px;}
   .foot-top{grid-template-columns:1fr;}
   .splash-hint{display:none;}
-  .hero-stats{gap:22px;}
+  .hero-stats{flex-direction:column;gap:16px;}
 }
 @media (max-width:600px){
   .wrap{padding-left:max(18px, env(safe-area-inset-left));padding-right:max(18px, env(safe-area-inset-right));}
@@ -1637,13 +1637,13 @@ function submitOrder(){
     localStorage.setItem('blkshop_orders', JSON.stringify(orders));
   }catch(_){}
   if(fireOn){
-    try{
-      fdb.collection('orders').doc(order.id).set(order, {merge:true});
-      fdb.collection('clients').doc('c_' + phone.replace(/[^0-9]/g,'')).set({
-        type:'commande', name, phone, city, address: addr, note,
-        date: order.date, orderId: order.id
-      }, {merge:true});
-    }catch(_){}
+    fdb.collection('orders').doc(order.id).set(order, {merge:true})
+      .catch(e=>{ console.warn('BLK SHOP · échec enregistrement commande:', e && e.code, e && e.message); });
+    fdb.collection('clients').doc('c_' + phone.replace(/[^0-9]/g,'')).set({
+      type:'commande', name, phone, city, address: addr, note,
+      date: order.date, orderId: order.id
+    }, {merge:true})
+      .catch(e=>{ console.warn('BLK SHOP · échec enregistrement client:', e && e.code, e && e.message); });
   }
   cart = [];
   saveCart();
@@ -1984,7 +1984,7 @@ function firstRender(){
   if(appStarted) return;
   appStarted = true;
   document.body.classList.add('loaded');
-  try{ console.log('%cBLK SHOP store — build clr-v23', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
+  try{ console.log('%cBLK SHOP store — build clr-v25', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
   render();
 }
 function runWhenFontsReady(cb, capMs){
