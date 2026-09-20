@@ -710,6 +710,10 @@ footer{border-top:1px solid var(--line);padding:64px 0 0;margin-top:60px;positio
   .pd-info h1{font-size:clamp(28px,8.5vw,44px);}
   .od-field,.od-sel select,.od-ta{font-size:16px;}
   .d-q{width:30px;height:30px;font-size:16px;}
+  .countdown{gap:8px;flex-wrap:nowrap;}
+  .cd-box{flex:1 1 0;min-width:0;max-width:110px;padding:12px 4px 10px;}
+  .cd-box b{font-size:clamp(20px,7vw,26px);}
+  .cd-box span{font-size:8px;letter-spacing:.06em;}
   .drawer-head button{padding:6px;margin:-6px;}
   .foot-top{grid-template-columns:1fr;}
   .splash-hint{display:none;}
@@ -1276,14 +1280,12 @@ function homePage(){
       <div class="wrap">
         <span class="kick">bientôt en boutique…</span>
         <h2>NOUVELLE&nbsp;ARRIVAGE</h2>
-        <p class="sub">// PAS DE RESTOCK. QUAND C'EST PARTI, C'EST PARTI.</p>
         <div class="countdown">
           <div class="cd-box"><b id="cdD">00</b><span>Jours</span></div>
           <div class="cd-box"><b id="cdH">00</b><span>Heures</span></div>
           <div class="cd-box"><b id="cdM">00</b><span>Min</span></div>
           <div class="cd-box"><b id="cdS">00</b><span>Sec</span></div>
         </div>
-        <div class="drop-kicker">PRÉ-VENTE RÉSERVÉE AUX MEMBRES</div>
       </div>
     </div>`;
   return `<div class="page">
