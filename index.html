@@ -1304,14 +1304,21 @@ function startCountdown(){
 }
 
 /* ---------------- pages ---------------- */
+/* empreinte de création en millisecondes : supporte number, string, ou Timestamp Firestore */
+const tsMs = v => v == null ? 0
+  : typeof v === 'number' ? v
+  : typeof v.toMillis === 'function' ? v.toMillis()
+  : (isNaN(Date.parse(v)) ? 0 : Date.parse(v));
+const byNewest = (a,b) => tsMs(b.createdAt) - tsMs(a.createdAt);
 function homePage(){
   const hero = (()=>{
-    const newest = PRODUCTS.filter(p=>p.img).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
-    if(newest && newest.createdAt) return newest;
-    return PRODUCTS.find(p=>p.id==='riot-hoodie') || PRODUCTS.find(p=>p.img) || null;
+    const withImg = PRODUCTS.filter(p=>p.img);
+    const newest = withImg.slice().sort(byNewest)[0];
+    if(newest && newest.createdAt != null) return newest;
+    return withImg[withImg.length - 1] || null;
   })();
   const featured = PRODUCTS.filter(p => p.img && p.id !== (hero && hero.id)).slice()
-    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4);
+    .sort(byNewest).slice(0,4);
   const heroImg = hero && hero.img ? `<img class="hero-pic" src="${instaImg(hero.img)}" alt="${hero.alt || hero.name || 'BLK SHOP'}">` : '';
   let news = ['NOUVELLE ARRIVAGE — SS26','LIVRAISON OFFERTE DÈS 800 MAD','SÉRIE LIMITÉE — PAS DE RESTOCK','CLASSIQUE & STREETWEAR'];
   if(fNews && fNews.length){
@@ -1741,7 +1748,7 @@ function wireShopPage(cat){
   const countLine = document.getElementById('countLine');
   function renderGrid(activeCat){
     const base = activeCat === 'Tout' ? PRODUCTS : PRODUCTS.filter(p => p.cat === activeCat);
-    const list = base.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const list = base.slice().sort(byNewest);
     grid.innerHTML = list.map(productCard).join('');
     countLine.textContent = `${String(list.length).padStart(2,'0')} pièce${list.length!==1?'s':''} dans cet arrivage`;
     initReveals(grid);
@@ -2009,7 +2016,7 @@ function firstRender(){
   if(appStarted) return;
   appStarted = true;
   document.body.classList.add('loaded');
-  try{ console.log('%cBLK SHOP store — build clr-v31', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
+  try{ console.log('%cBLK SHOP store — build clr-v33', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
   render();
 }
 function runWhenFontsReady(cb, capMs){
