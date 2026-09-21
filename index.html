@@ -116,10 +116,6 @@ a:focus-visible, button:focus-visible, input:focus-visible{
 .splash-enter:hover{color:var(--ink);border-color:var(--stamp);}
 .splash-enter:hover::after{transform:translateY(0);}
 #splash.ready .splash-enter{opacity:1;transform:translateY(0);}
-.splash-skip{
-  position:absolute;bottom:28px;right:30px;font-family:'JetBrains Mono',monospace;
-  font-size:11px;letter-spacing:.08em;color:var(--concrete);
-}
 .splash-hint{
   position:absolute;bottom:28px;left:30px;font-family:'JetBrains Mono',monospace;
   font-size:10px;letter-spacing:.12em;color:var(--concrete);opacity:.6;
@@ -767,8 +763,7 @@ footer{border-top:1px solid var(--line);padding:64px 0 0;margin-top:60px;positio
     <div class="splash-pct" id="splashPct">00%</div>
     <button class="splash-enter" id="splashEnter" aria-label="Entrer dans la boutique">ENTRER DANS LA BOUTIQUE</button>
   </div>
-  <div class="splash-hint">KENITRA · CLASSIQUE &amp; STREETWEAR</div>
-  <button class="splash-skip" id="splashSkip">PASSER →</button>
+  <div class="splash-hint">MECHRAA BEL KSIRI · CLASSIQUE &amp; STREETWEAR</div>
 </div>
 
 <div class="nav-bg" aria-hidden="true"></div>
@@ -1981,11 +1976,7 @@ window.addEventListener('hashchange', render);
     autoTimer = setTimeout(dismiss, 2200);
   }
   enter.addEventListener('click', dismiss);
-  splash.addEventListener('click', e=>{
-    if(e.target.closest('.splash-skip')) return;
-    dismiss();
-  });
-  splashSkip.addEventListener('click', dismiss);
+  splash.addEventListener('click', ()=>{ dismiss(); });
 
   window.addEventListener('DOMContentLoaded', boot);
 })();
