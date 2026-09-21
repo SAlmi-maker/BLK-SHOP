@@ -192,11 +192,11 @@ body.nav-open{overflow:hidden;}
   background:var(--ink-2);overflow:hidden;white-space:nowrap;
   padding:13px 0;margin-top:70px;
 }
-.marquee .track{display:inline-flex;animation:scroll 28s linear infinite;}
+.marquee .track{display:inline-flex;gap:26px;animation:scroll 28s linear infinite;}
 .marquee:hover .track{animation-play-state:paused;}
 .marquee span{
   font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.12em;
-  color:var(--concrete);padding:0 26px;display:inline-flex;align-items:center;gap:26px;
+  color:var(--concrete);display:inline-flex;align-items:center;gap:26px;
 }
 .marquee span:after{content:'◆';color:var(--stamp);font-size:8px;}
 @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
@@ -1001,12 +1001,12 @@ if(fireOn){
     const key = JSON.stringify(docs);
     if(key !== _prodKey){
       _prodKey = key;
-      if(appStarted) render();
+      if(appStarted) safeRender();
     }
   });
   fdb.collection('guides').onSnapshot(snap=>{
     GUIDES = snap.docs.map(d=>d.data());
-    if(appStarted) render();
+    if(appStarted) safeRender();
   });
   fdb.collection('settings').doc('app').onSnapshot(doc=>{
     if(doc.exists){
@@ -1015,7 +1015,7 @@ if(fireOn){
       if(Array.isArray(d.news)) fNews = d.news.filter(Boolean);
       if(typeof d.hideCountdown === 'boolean') fHideCd = d.hideCountdown;
     }
-    if(appStarted) render();
+    if(appStarted) safeRender();
   });
 }
 
@@ -1075,6 +1075,10 @@ function bumpCart(){
 }
 
 function renderCart(){
+  if(PRODUCTS.length){
+    const clean = cart.filter(c => findProduct(c.id));
+    if(clean.length !== cart.length){ cart = clean; saveCart(); }
+  }
   document.getElementById('cartCount').textContent = cartCount();
   const wrap = document.getElementById('drawerItems');
   if(cart.length === 0){
@@ -1301,12 +1305,13 @@ function startCountdown(){
 
 /* ---------------- pages ---------------- */
 function homePage(){
-  const featured = PRODUCTS.slice(0,4);
   const hero = (()=>{
     const newest = PRODUCTS.filter(p=>p.img).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
     if(newest && newest.createdAt) return newest;
     return PRODUCTS.find(p=>p.id==='riot-hoodie') || PRODUCTS.find(p=>p.img) || null;
   })();
+  const featured = PRODUCTS.filter(p => p.img && p.id !== (hero && hero.id)).slice()
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,4);
   const heroImg = hero && hero.img ? `<img class="hero-pic" src="${instaImg(hero.img)}" alt="${hero.alt || hero.name || 'BLK SHOP'}">` : '';
   let news = ['NOUVELLE ARRIVAGE — SS26','LIVRAISON OFFERTE DÈS 800 MAD','SÉRIE LIMITÉE — PAS DE RESTOCK','CLASSIQUE & STREETWEAR'];
   if(fNews && fNews.length){
@@ -1647,12 +1652,13 @@ function submitOrder(){
         .catch(e=>{ console.warn('BLK SHOP · échec enregistrement client:', e && e.code, e && e.message); });
     }catch(e){ console.warn('BLK SHOP · erreur Firestore:', e); }
   }
+  orderPlaced = true;
   cart = [];
   saveCart();
   renderCart();
   showToast('Commande envoyée — on t\'appelle pour confirmer');
-  try{ history.replaceState(null, '', '#/shop'); }
-  catch(_){ location.hash = '#/shop'; }
+  try{ history.replaceState(null, '', '#/confirmation'); }
+  catch(_){ location.hash = '#/confirmation'; }
   app.innerHTML = orderPage(true);
   ensureFooter();
   window.scrollTo(0,0);
@@ -1710,6 +1716,7 @@ function footerHTML(){
 /* ---------------- router ---------------- */
 const app = document.getElementById('app');
 let footerMounted = false;
+let orderPlaced = false;
 
 function ensureFooter(){
   if(!footerMounted){
@@ -1878,9 +1885,18 @@ function infoPage(slug){
   </div>`;
 }
 
+function safeRender(){
+  if(!appStarted) return;
+  /* si le client est en train de remplir le formulaire de commande,
+     ne pas tout ré-afficher (ça effacerait sa saisie) — on rafraîchit juste les totaux. */
+  if(document.getElementById('orderForm')){ refreshOrderSummary(); return; }
+  render();
+}
+
 function render(){
   const {path, params} = parseHash();
   window.scrollTo(0,0);
+  if(path !== '/confirmation') orderPlaced = false;
 
   if(path.startsWith('/product/')){
     const id = path.split('/product/')[1];
@@ -1904,6 +1920,11 @@ function render(){
     ensureFooter();
     setActiveNav('');
     wireOrderPage();
+  } else if(path === '/confirmation'){
+    if(!orderPlaced){ location.hash = '#/shop'; return; }
+    app.innerHTML = orderPage(true);
+    ensureFooter();
+    setActiveNav('');
   } else if(path === '/shop'){
     const cat = params.get('cat') || 'Tout';
     app.innerHTML = shopPage(cat);
@@ -1988,7 +2009,7 @@ function firstRender(){
   if(appStarted) return;
   appStarted = true;
   document.body.classList.add('loaded');
-  try{ console.log('%cBLK SHOP store — build clr-v29', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
+  try{ console.log('%cBLK SHOP store — build clr-v31', 'color:#e7ff3c;font-weight:bold'); }catch(e){}
   render();
 }
 function runWhenFontsReady(cb, capMs){
